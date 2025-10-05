@@ -94,9 +94,13 @@ void DrawNetBackground(const ImVec2& window_pos, const ImVec2& window_size, floa
 
 // Setup ImGui with dark theme
 void SetupImGui() {
-    if (IsMenuInitialized) return;
+    if (IsMenuInitialized) {
+        LOGI("SetupImGui called but already initialized");
+        return;
+    }
     
-    LOGI("Setting up ImGui...");
+    LOGI("=== SETTING UP IMGUI ===");
+    LOGI("Creating ImGui context...");
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
@@ -199,7 +203,8 @@ void SetupImGui() {
     ImGui::GetStyle().ScaleAllSizes(3.0f);
 
     IsMenuInitialized = true;
-    LOGI("ImGui setup complete!");
+    LOGI("=== IMGUI SETUP COMPLETE! ===");
+    LOGI("Menu should now be ready to render");
 }
 
 // Main menu drawing function
@@ -214,12 +219,27 @@ void DrawModMenu() {
         return;
     }
     
-    LOGI("Drawing mod menu...");
+    static int drawCount = 0;
+    drawCount++;
+    if (drawCount % 60 == 1) { // Log every 60 frames
+        LOGI("=== DRAWING MOD MENU (frame %d) ===", drawCount);
+    }
 
     const ImVec2 windowDim = ImVec2(700, 700);
     ImGui::SetNextWindowSize(windowDim, ImGuiCond_Once);
     ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
 
+    // Test: Always show a simple window first
+    if (ImGui::Begin("Test Window")) {
+        ImGui::Text("Hello from ImGui!");
+        ImGui::Text("Menu Visible: %s", IsMenuVisible ? "YES" : "NO");
+        ImGui::Text("Menu Initialized: %s", IsMenuInitialized ? "YES" : "NO");
+        if (ImGui::Button("Close Test")) {
+            // Close test window
+        }
+    }
+    ImGui::End();
+    
     if (ImGui::Begin(ICON_FA_GAMEPAD " LSPosed Mod Menu")) {
         ImVec2 pos = ImGui::GetWindowPos();
         ImVec2 size = ImGui::GetWindowSize();

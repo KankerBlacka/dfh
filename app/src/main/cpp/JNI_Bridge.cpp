@@ -59,6 +59,10 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     static int frameCount = 0;
     frameCount++;
     
+    if (frameCount == 1) {
+        LOGI("=== eglSwapBuffers HOOKED - First frame! ===");
+    }
+    
     if (!IsMenuInitialized) {
         LOGI("Setting up ImGui on frame %d", frameCount);
         SetupImGui();
@@ -240,15 +244,23 @@ void* hook_thread(void*) {
 // JNI function to initialize the mod menu
 extern "C" JNIEXPORT void JNICALL
 Java_shaizuro_xposedmenu_sti_NativeLib_initModMenu(JNIEnv* env, jobject thiz) {
+    LOGI("=== NATIVE LIBRARY LOADED ===");
     LOGI("initModMenu called from Java");
     
     static bool initialized = false;
     if (!initialized) {
+        LOGI("Creating hook thread...");
         pthread_t thread;
-        pthread_create(&thread, nullptr, hook_thread, nullptr);
-        pthread_detach(thread);
-        initialized = true;
-        LOGI("Hook thread created");
+        int result = pthread_create(&thread, nullptr, hook_thread, nullptr);
+        if (result == 0) {
+            pthread_detach(thread);
+            initialized = true;
+            LOGI("Hook thread created successfully");
+        } else {
+            LOGE("Failed to create hook thread: %d", result);
+        }
+    } else {
+        LOGI("Hook thread already initialized");
     }
 }
 
@@ -267,7 +279,8 @@ Java_shaizuro_xposedmenu_sti_NativeLib_isMenuInitialized(JNIEnv* env, jobject th
 
 // JNI_OnLoad - called when library is loaded
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-    LOGI("Native library loaded!");
+    LOGI("=== JNI_OnLoad called - Native library loaded! ===");
+    LOGI("JavaVM pointer: %p", vm);
     return JNI_VERSION_1_6;
 }
 
