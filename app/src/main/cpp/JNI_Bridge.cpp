@@ -112,9 +112,12 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
                     default:
                         break;
                 }
+            } else {
+                io.MouseDown[0] = false;
+            }
+        }
     } else {
         io.MouseDown[0] = false;
-    }
     }
     
     // Fallback: Simple keyboard input for non-Unity games
