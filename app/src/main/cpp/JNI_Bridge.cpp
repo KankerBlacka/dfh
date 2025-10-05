@@ -56,7 +56,11 @@ struct UnityEngine_Touch_Fields {
 
 // Hooked eglSwapBuffers function
 EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
+    static int frameCount = 0;
+    frameCount++;
+    
     if (!IsMenuInitialized) {
+        LOGI("Setting up ImGui on frame %d", frameCount);
         SetupImGui();
     }
 
@@ -64,6 +68,7 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     
     // Handle touch input (if Unity game)
     static bool should_clear_mouse_pos = false;
+    static int touchCount = 0;
     
     if (G_IL2CPP) {
         int (*TouchCount)(void*) = (int (*)(void*)) (Il2CppGetMethodOffset(
@@ -94,6 +99,12 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
                     case TouchPhase::Canceled:
                         io.MouseDown[0] = false;
                         should_clear_mouse_pos = true;
+                        
+                        // Simple gesture: tap top-left corner to toggle menu
+                        if (touch.m_Position.fields.x < 100 && touch.m_Position.fields.y < 100) {
+                            IsMenuVisible = !IsMenuVisible;
+                            LOGI("Menu toggled: %s", IsMenuVisible ? "visible" : "hidden");
+                        }
                         break;
                     case TouchPhase::Moved:
                         io.MousePos = ImVec2(touch.m_Position.fields.x, reverseY);
@@ -101,17 +112,40 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
                     default:
                         break;
                 }
-            } else {
-                io.MouseDown[0] = false;
-            }
-        }
+    } else {
+        io.MouseDown[0] = false;
     }
+    
+    // Fallback: Simple keyboard input for non-Unity games
+    // You can add more input methods here if needed
+    static bool lastMouseState = false;
+    if (io.MouseDown[0] && !lastMouseState) {
+        // Simple click to toggle menu
+        IsMenuVisible = !IsMenuVisible;
+        LOGI("Menu toggled via mouse: %s", IsMenuVisible ? "visible" : "hidden");
+    }
+    lastMouseState = io.MouseDown[0];
 
     // Draw ImGui
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
     DrawModMenu();
     ImGui::Render();
+    
+    if (frameCount % 60 == 0) { // Log every 60 frames (about once per second)
+        LOGI("Rendering frame %d, menu visible: %d, initialized: %d", 
+             frameCount, IsMenuVisible, IsMenuInitialized);
+        
+        // Check if Il2Cpp is ready and install hooks if needed
+        if (G_IL2CPP && Il2CppIsAssembliesLoaded()) {
+            static bool hooksInstalled = false;
+            if (!hooksInstalled) {
+                LOGI("Il2Cpp is ready - installing game hooks now");
+                InstallGameHooks();
+                hooksInstalled = true;
+            }
+        }
+    }
     
     glViewport(0, 0, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y));
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -129,21 +163,37 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 void* hook_thread(void*) {
     LOGI("Hook thread started");
     
-    // Wait for libil2cpp.so to load (if Unity game)
+    // Wait for libil2cpp.so to load (Unity game)
     const char* targetLib = "libil2cpp.so";
-    while (!G_IL2CPP) {
+    LOGI("Waiting for Il2Cpp to load...");
+    
+    int attempts = 0;
+    const int maxAttempts = 30; // Wait up to 30 seconds
+    
+    while (!G_IL2CPP && attempts < maxAttempts) {
         G_IL2CPP = (uintptr_t)dlopen(targetLib, RTLD_NOLOAD);
         if (!G_IL2CPP) {
             void* handle = dlopen(targetLib, RTLD_NOW);
             if (handle) {
                 G_IL2CPP = (uintptr_t)handle;
-                LOGI("Found %s at 0x%lx", targetLib, G_IL2CPP);
+                LOGI("Found %s at 0x%lx (attempt %d)", targetLib, G_IL2CPP, attempts + 1);
+                break;
             }
+        } else {
+            LOGI("Found existing %s at 0x%lx (attempt %d)", targetLib, G_IL2CPP, attempts + 1);
+            break;
         }
+        
+        attempts++;
+        LOGI("Il2Cpp not found yet, waiting... (attempt %d/%d)", attempts, maxAttempts);
         sleep(1);
     }
     
-    // Hook eglSwapBuffers
+    if (!G_IL2CPP) {
+        LOGE("Failed to find Il2Cpp after %d attempts - game hooks may not work", maxAttempts);
+    }
+    
+    // Hook eglSwapBuffers for rendering
     void* eglSwapBuffers_addr = dlsym(RTLD_DEFAULT, "eglSwapBuffers");
     if (eglSwapBuffers_addr) {
         LOGI("Found eglSwapBuffers at %p", eglSwapBuffers_addr);
@@ -161,14 +211,23 @@ void* hook_thread(void*) {
     
     // Initialize Il2Cpp if available
     if (G_IL2CPP) {
+        LOGI("Initializing Il2Cpp...");
         Il2CppAttach();
-        LOGI("Il2Cpp attached");
+        LOGI("Il2Cpp attached successfully");
         
         // Wait a bit for Il2Cpp to fully initialize
-        sleep(2);
+        LOGI("Waiting for Il2Cpp to fully initialize...");
+        sleep(3);
         
-        // Install game-specific hooks
-        InstallGameHooks();
+        // Check if Il2Cpp is ready
+        if (Il2CppIsAssembliesLoaded()) {
+            LOGI("Il2Cpp assemblies loaded - installing game hooks");
+            InstallGameHooks();
+        } else {
+            LOGI("Il2Cpp assemblies not ready yet - hooks will be installed later");
+        }
+    } else {
+        LOGE("Il2Cpp not found - game hooks will not work");
     }
     
     return nullptr;

@@ -56,31 +56,64 @@ void InstallGameHooks() {
         return;
     }
     
-    LOGI("Installing game hooks...");
+    LOGI("Installing game hooks for Soul Strike...");
     
-    // Example: Hook a Unity game's currency method
-    // Replace these with your actual game's namespace, class, and method names
+    // Example hooks for Soul Strike game
+    // You'll need to find the actual class/method names using Il2CppDumper or similar tools
+    
+    // Example 1: Currency/Diamonds hook
     /*
     void* currencyMethod = Il2CppGetMethodOffset(
         OBFUSCATE("Assembly-CSharp.dll"),     // DLL name
-        OBFUSCATE("User"),                     // Namespace
-        OBFUSCATE("Profile"),                  // Class name
-        OBFUSCATE("get_HardCurrency"),         // Method name
+        OBFUSCATE("GameData"),                 // Namespace (example)
+        OBFUSCATE("PlayerData"),               // Class name (example)
+        OBFUSCATE("get_Diamonds"),             // Method name (example)
         0                                      // Parameter count
     );
     
     if (currencyMethod) {
         DobbyHook(currencyMethod, (void*)GetHardCurrency_Hook, (void**)&old_GetHardCurrency);
-        LOGI("Hooked GetHardCurrency");
+        LOGI("Hooked Diamonds getter");
     }
     */
     
-    // Add more hooks here for your target game
-    // Examples:
-    // - Health/damage hooks for god mode
-    // - Ammo hooks for unlimited ammo
-    // - Speed/movement hooks
-    // - Item/unlock hooks
+    // Example 2: Health/HP hook
+    /*
+    void* healthMethod = Il2CppGetMethodOffset(
+        OBFUSCATE("Assembly-CSharp.dll"),
+        OBFUSCATE("GameData"),
+        OBFUSCATE("PlayerData"),
+        OBFUSCATE("get_Health"),
+        0
+    );
+    
+    if (healthMethod) {
+        DobbyHook(healthMethod, (void*)GetHealth_Hook, (void**)&old_GetHealth);
+        LOGI("Hooked Health getter");
+    }
+    */
+    
+    // Example 3: Ammo/Weapon hook
+    /*
+    void* ammoMethod = Il2CppGetMethodOffset(
+        OBFUSCATE("Assembly-CSharp.dll"),
+        OBFUSCATE("GameData"),
+        OBFUSCATE("WeaponData"),
+        OBFUSCATE("get_Ammo"),
+        0
+    );
+    
+    if (ammoMethod) {
+        DobbyHook(ammoMethod, (void*)GetAmmo_Hook, (void**)&old_GetAmmo);
+        LOGI("Hooked Ammo getter");
+    }
+    */
+    
+    // TODO: Add actual hooks for Soul Strike game
+    // You'll need to:
+    // 1. Use Il2CppDumper to find the actual class/method names
+    // 2. Replace the example names above with real ones
+    // 3. Uncomment the hooks you want to use
     
     LOGI("Game hooks installation complete");
 }

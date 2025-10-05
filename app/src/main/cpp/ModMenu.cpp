@@ -204,7 +204,17 @@ void SetupImGui() {
 
 // Main menu drawing function
 void DrawModMenu() {
-    if (!IsMenuVisible || !IsMenuInitialized) return;
+    if (!IsMenuInitialized) {
+        LOGI("Menu not initialized yet");
+        return;
+    }
+    
+    if (!IsMenuVisible) {
+        LOGI("Menu is hidden");
+        return;
+    }
+    
+    LOGI("Drawing mod menu...");
 
     const ImVec2 windowDim = ImVec2(700, 700);
     ImGui::SetNextWindowSize(windowDim, ImGuiCond_Once);
