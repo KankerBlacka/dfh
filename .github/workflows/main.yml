@@ -322,18 +322,32 @@ jobs:
       - name: Get version info
         id: version
         run: |
-          VERSION_NAME=$(grep "versionName" app/build.gradle | awk '{print $2}' | tr -d '"')
-          VERSION_CODE=$(grep "versionCode" app/build.gradle | awk '{print $2}')
+          echo "Extracting version info..."
+          VERSION_NAME=$(grep "versionName" app/build.gradle | awk '{print $2}' | tr -d '"' | tr -d '\r\n' | tr -d '\n')
+          VERSION_CODE=$(grep "versionCode" app/build.gradle | awk '{print $2}' | tr -d '\r\n' | tr -d '\n')
+          echo "Raw version name: '$(grep "versionName" app/build.gradle | awk '{print $2}')'"
+          echo "Cleaned version name: '$VERSION_NAME'"
+          echo "Raw version code: '$(grep "versionCode" app/build.gradle | awk '{print $2}')'"
+          echo "Cleaned version code: '$VERSION_CODE'"
           echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
           echo "build_date=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
           
       - name: Rename APKs
         run: |
+          echo "Renaming APKs..."
+          # Clean version name to remove any problematic characters
+          CLEAN_VERSION=$(echo "${{ steps.version.outputs.version_name }}" | tr -d '\r\n' | tr -d '\n' | sed 's/[^a-zA-Z0-9._-]//g')
+          echo "Clean version for filename: '$CLEAN_VERSION'"
+          
           mv app/build/outputs/apk/debug/app-debug.apk \
-             app/build/outputs/apk/debug/LSPosed-ModMenu-v${{ steps.version.outputs.version_name }}-debug.apk
+             "app/build/outputs/apk/debug/LSPosed-ModMenu-v${CLEAN_VERSION}-debug.apk"
           mv app/build/outputs/apk/release/app-release.apk \
-             app/build/outputs/apk/release/LSPosed-ModMenu-v${{ steps.version.outputs.version_name }}-release.apk
+             "app/build/outputs/apk/release/LSPosed-ModMenu-v${CLEAN_VERSION}-release.apk"
+          
+          echo "APK files renamed successfully"
+          ls -la app/build/outputs/apk/debug/
+          ls -la app/build/outputs/apk/release/
              
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
