@@ -1,17 +1,20 @@
 #pragma once
 
+#include <jni.h>
+#include <android/log.h>
+
 // Example hook for Int method (Unity Il2Cpp games)
 // This is referenced by the "Unlimited Diamonds" toggle in the menu
 
-// Declarations for hook functions and variables
+// Declarations for hook function pointers
 extern int (*old_GetHardCurrency)(void *instance);
-extern int GetHardCurrency_Hook(void *instance);
-
 extern float (*old_GetHealth)(void *instance);
-extern float GetHealth_Hook(void *instance);
-
 extern int (*old_GetAmmo)(void *instance);
-extern int GetAmmo_Hook(void *instance);
 
-extern void InstallGameHooks();
+// Declarations for hook functions
+int GetHardCurrency_Hook(void *instance);
+float GetHealth_Hook(void *instance);
+int GetAmmo_Hook(void *instance);
 
+// Declarations for install function
+void InstallGameHooks();

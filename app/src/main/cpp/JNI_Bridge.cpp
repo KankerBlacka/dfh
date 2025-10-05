@@ -176,7 +176,7 @@ void* hook_thread(void*) {
 
 // JNI function to initialize the mod menu
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_xposedmodule_NativeLib_initModMenu(JNIEnv* env, jobject thiz) {
+Java_shaizuro_xposedmenu_sti_NativeLib_initModMenu(JNIEnv* env, jobject thiz) {
     LOGI("initModMenu called from Java");
     
     static bool initialized = false;
@@ -191,14 +191,14 @@ Java_com_example_xposedmodule_NativeLib_initModMenu(JNIEnv* env, jobject thiz) {
 
 // JNI function to show/hide menu
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_xposedmodule_NativeLib_setMenuVisible(JNIEnv* env, jobject thiz, jboolean visible) {
+Java_shaizuro_xposedmenu_sti_NativeLib_setMenuVisible(JNIEnv* env, jobject thiz, jboolean visible) {
     IsMenuVisible = visible;
     LOGI("Menu visibility set to: %d", visible);
 }
 
 // JNI function to check if menu is initialized
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_example_xposedmodule_NativeLib_isMenuInitialized(JNIEnv* env, jobject thiz) {
+Java_shaizuro_xposedmenu_sti_NativeLib_isMenuInitialized(JNIEnv* env, jobject thiz) {
     return IsMenuInitialized;
 }
 
