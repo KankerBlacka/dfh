@@ -115,6 +115,7 @@ EGLBoolean hooked_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     } else {
         io.MouseDown[0] = false;
     }
+    }
     
     // Fallback: Simple keyboard input for non-Unity games
     // You can add more input methods here if needed
